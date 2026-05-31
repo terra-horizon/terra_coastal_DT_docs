@@ -1,6 +1,6 @@
 # Maintenance
 
-Maintenance keeps TERRA UGLA useful as new observations, AOIs, and validation needs appear.
+Maintenance keeps TERRA Coastal DT useful as new observations, AOIs, and validation needs appear.
 
 ## AOI Maintenance
 

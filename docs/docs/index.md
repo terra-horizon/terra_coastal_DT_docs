@@ -1,6 +1,6 @@
-# TERRA UGLA
+# TERRA Coastal DT
 
-TERRA UGLA is a coastal digital twin module for vegetation-edge based coastline monitoring, forecasting, and retrospective validation. It is part of the wider [TERRA](https://terra-horizon.eu/) platform and contributes coastal-state perception and forecasting capability to the platform digital twin.
+TERRA Coastal DT is a coastal digital twin module for vegetation-edge based coastline monitoring, forecasting, and retrospective validation. It is part of the wider [TERRA](https://terra-horizon.eu/) platform and contributes coastal-state perception and forecasting capability to the platform digital twin.
 
 The module helps users work with coastal Areas of Interest (AOIs) by turning satellite observations into comparable coastal state information. It combines fixed AOI geometry, vegetation edge extraction, transect-based state history, probabilistic forecasting, and validation workflows.
 

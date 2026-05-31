@@ -1,6 +1,6 @@
 # Service Architecture
 
-TERRA UGLA is organized as a coastal digital twin module. Its purpose is to maintain a repeatable coastal state representation for each AOI and expose workflows for current-state extraction, historical context, forecasting, and validation.
+TERRA Coastal DT is organized as a coastal digital twin module. Its purpose is to maintain a repeatable coastal state representation for each AOI and expose workflows for current-state extraction, historical context, forecasting, and validation.
 
 ## Core Components
 

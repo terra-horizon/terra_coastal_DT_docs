@@ -1,8 +1,8 @@
-# TERRA UGLA
+# TERRA Coastal DT
 
-This repository hosts the public documentation for the TERRA UGLA coastal digital twin module.
+This repository hosts the public documentation for the TERRA Coastal DT module.
 
-TERRA UGLA supports vegetation-edge based coastline monitoring, probabilistic forecast generation, retrospective validation, and AOI-level coastal state management. The documentation is intended for users, reviewers, project partners, and technical integrators who need to understand what the module does and how its public workflows are organized.
+TERRA Coastal DT supports vegetation-edge based coastline monitoring, probabilistic forecast generation, retrospective validation, and AOI-level coastal state management. The documentation is intended for users, reviewers, project partners, and technical integrators who need to understand what the module does and how its public workflows are organized.
 
 Documentation site:
 

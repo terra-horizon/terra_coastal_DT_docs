@@ -1,6 +1,6 @@
 # API Surface
 
-This page summarizes the public service surface documented for TERRA UGLA. The maintained OpenAPI source is available as [openapi.yaml](openapi.yaml).
+This page summarizes the public service surface documented for TERRA Coastal DT. The maintained OpenAPI source is available as [openapi.yaml](openapi.yaml).
 
 The API is intended for web interfaces, platform integration, workflow automation, and result retrieval. Endpoint availability may depend on deployment configuration, imagery access, prepared AOI data, and enabled processing services.
 

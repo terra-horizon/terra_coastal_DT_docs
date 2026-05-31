@@ -1,6 +1,6 @@
 # Data & State Model
 
-TERRA UGLA keeps coastal observations comparable by expressing them in an AOI-specific measurement frame.
+TERRA Coastal DT keeps coastal observations comparable by expressing them in an AOI-specific measurement frame.
 
 ## AOI Geometry
 

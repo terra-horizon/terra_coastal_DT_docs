@@ -1,6 +1,6 @@
 # Quality Assurance
 
-Quality assurance for TERRA UGLA focuses on whether the module produces traceable, interpretable, and consistent coastal state outputs.
+Quality assurance for TERRA Coastal DT focuses on whether the module produces traceable, interpretable, and consistent coastal state outputs.
 
 ## Workflow Checks
 

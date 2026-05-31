@@ -1,10 +1,10 @@
 # Technical Approach
 
-This page explains the main technical ideas behind TERRA UGLA in public-facing terms. It focuses on why the module uses fixed AOI geometry, vegetation edge state extraction, transect-distance forecasting, and retrospective validation.
+This page explains the main technical ideas behind TERRA Coastal DT in public-facing terms. It focuses on why the module uses fixed AOI geometry, vegetation edge state extraction, transect-distance forecasting, and retrospective validation.
 
 ## Coastal State as a Digital Twin Variable
 
-TERRA UGLA treats the coastline as an evolving state rather than as a single line extracted from one image. For each AOI, the module aims to connect:
+TERRA Coastal DT treats the coastline as an evolving state rather than as a single line extracted from one image. For each AOI, the module aims to connect:
 
 - the latest observed vegetation edge;
 - historical vegetation edge movement;
@@ -71,4 +71,4 @@ The module should be interpreted as decision-support technology, not as a replac
 
 ## Summary
 
-The main technical idea behind TERRA UGLA is to turn repeated satellite observations into a stable, comparable, and forecastable coastal state record. Fixed geometry provides the measurement frame, vegetation edge extraction provides the observed state, transect-distance forecasting provides future scenarios, and retrospective validation helps users inspect forecast credibility.
+The main technical idea behind TERRA Coastal DT is to turn repeated satellite observations into a stable, comparable, and forecastable coastal state record. Fixed geometry provides the measurement frame, vegetation edge extraction provides the observed state, transect-distance forecasting provides future scenarios, and retrospective validation helps users inspect forecast credibility.

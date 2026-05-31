@@ -1,6 +1,6 @@
 # Configuration
 
-TERRA UGLA relies on environment-specific configuration so that the same module can run in different deployment contexts.
+TERRA Coastal DT relies on environment-specific configuration so that the same module can run in different deployment contexts.
 
 ## Main Configuration Areas
 

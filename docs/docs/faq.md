@@ -1,8 +1,8 @@
 # Frequently Asked Questions
 
-## What is TERRA UGLA?
+## What is TERRA Coastal DT?
 
-TERRA UGLA is a coastal digital twin module for vegetation-edge based coastline monitoring, forecasting, and retrospective validation.
+TERRA Coastal DT is a coastal digital twin module for vegetation-edge based coastline monitoring, forecasting, and retrospective validation.
 
 ## Who is the documentation for?
 
@@ -10,11 +10,11 @@ The documentation is for users, project partners, reviewers, and technical integ
 
 ## What is an AOI?
 
-An AOI is an Area of Interest. In TERRA UGLA, each prepared coastal AOI has a fixed reference line and transects so that observations can be compared across time.
+An AOI is an Area of Interest. In TERRA Coastal DT, each prepared coastal AOI has a fixed reference line and transects so that observations can be compared across time.
 
 ## What is a transect?
 
-A transect is a repeatable cross-shore measurement profile. TERRA UGLA uses transects to measure how far the vegetation edge is from the AOI reference line.
+A transect is a repeatable cross-shore measurement profile. TERRA Coastal DT uses transects to measure how far the vegetation edge is from the AOI reference line.
 
 ## Why does the module use fixed reference lines and transects?
 
@@ -42,7 +42,7 @@ The latest-observation step may fail if recent satellite scenes are cloudy, cont
 
 ## Are forecast outputs final decisions?
 
-No. TERRA UGLA provides decision-support information. Forecasts and uncertainty bounds should be interpreted together with local knowledge, expert assessment, and other coastal evidence.
+No. TERRA Coastal DT provides decision-support information. Forecasts and uncertainty bounds should be interpreted together with local knowledge, expert assessment, and other coastal evidence.
 
 ## Where is the OpenAPI description?
 

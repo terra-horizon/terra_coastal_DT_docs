@@ -14,7 +14,7 @@ The site is built from the MkDocs source in this repository.
 
 ## Service Deployment Context
 
-TERRA UGLA is expected to run as part of a wider platform or project environment where satellite imagery access, AOI data, processing resources, storage, and user-facing interfaces are available.
+TERRA Coastal DT is expected to run as part of a wider platform or project environment where satellite imagery access, AOI data, processing resources, storage, and user-facing interfaces are available.
 
 A typical deployment needs:
 
@@ -26,4 +26,4 @@ A typical deployment needs:
 
 ## Publication and Access
 
-Public users generally interact with TERRA UGLA through the deployed documentation, maps, API endpoints, or project demonstrations. Operational deployment details such as credentials, private datasets, and infrastructure-specific secrets are managed outside the public documentation site.
+Public users generally interact with TERRA Coastal DT through the deployed documentation, maps, API endpoints, or project demonstrations. Operational deployment details such as credentials, private datasets, and infrastructure-specific secrets are managed outside the public documentation site.
