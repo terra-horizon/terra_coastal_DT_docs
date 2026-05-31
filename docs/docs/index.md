@@ -1,15 +1,15 @@
 # TERRA UGLA
 
-This is the documentation site for TERRA UGLA, the coastal digital twin module focused on vegetation-edge based coastline monitoring, forecasting, and retrospective validation. The service is part of the wider [TERRA](https://terra-horizon.eu/) platform and contributes coastal-state perception and forecasting capability to the platform digital twin.
+TERRA UGLA is a coastal digital twin module for vegetation-edge based coastline monitoring, forecasting, and retrospective validation. It is part of the wider [TERRA](https://terra-horizon.eu/) platform and contributes coastal-state perception and forecasting capability to the platform digital twin.
 
-TERRA UGLA connects satellite observations, AOI-specific fixed geometry, vegetation edge extraction, transect-based state history, probabilistic forecasting, and validation workflows into one operational module.
+The module helps users work with coastal Areas of Interest (AOIs) by turning satellite observations into comparable coastal state information. It combines fixed AOI geometry, vegetation edge extraction, transect-based state history, probabilistic forecasting, and validation workflows.
 
-The main public documentation entry points are:
+The main documentation entry points are:
 
-- [Architecture](architecture.md), for the module structure and service responsibilities.
-- [Data & State Model](data-state.md), for AOI geometry, run outputs, and digital twin state artifacts.
-- [Forecast Workflow](forecast-workflow.md), for the current AOI-first operator flow.
-- [Retrospective Validation](validation.md), for same-month historical forecast testing.
-- [Technical Route](technical-route.md), for implementation-level context behind fixed geometry, VE extraction, and transect forecasting.
+- [Architecture](architecture.md), for the module structure and responsibilities.
+- [Data & State Model](data-state.md), for AOI geometry, run outputs, and digital twin state concepts.
+- [Forecast Workflow](forecast-workflow.md), for the AOI-first user workflow.
+- [Retrospective Validation](validation.md), for historical forecast testing.
+- [Technical Approach](technical-route.md), for the main technical ideas behind fixed geometry, vegetation edge extraction, and transect forecasting.
 
-The implementation repository is maintained separately and may remain private. This repository is intended for public documentation, deployment notes, service interface descriptions, and TERRA-facing project material.
+The documentation focuses on public concepts, user workflows, service interfaces, and integration-level information.

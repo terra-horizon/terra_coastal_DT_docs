@@ -1,31 +1,28 @@
 # Maintenance
 
-This documentation repository should remain small and public-safe.
+Maintenance keeps TERRA UGLA useful as new observations, AOIs, and validation needs appear.
 
-## Update Policy
+## AOI Maintenance
 
-Update the documentation when one of the following changes:
+AOIs should be reviewed when:
 
-- public API surface;
-- forecast or validation workflow behavior;
-- AOI geometry or state model concepts;
-- quality assurance expectations;
-- deployment or documentation publication process.
+- the coastline has changed substantially;
+- fixed geometry no longer matches observed vegetation edge behavior;
+- extraction coverage drops unexpectedly;
+- users need new AOIs or revised AOI boundaries.
 
-## Versioning
+## Observation Updates
 
-The documentation deployment workflow uses `mike` to publish versioned documentation and set `latest` as the default alias.
+The module can be updated with new observations as imagery becomes available. Regular updates improve the coastal state history and provide more recent starting points for forecasts.
 
-## Content Ownership
+## Validation Updates
 
-Implementation-specific details should be summarized here only when they are needed for public understanding. Source code, private data paths, credentials, and internal run outputs should remain in the private code repository.
+Validation should be rerun when new target observations become available or when additional historical cases are added. This keeps forecast credibility evidence current.
 
-## Repository Hygiene
+## Documentation Updates
 
-Keep this repository focused on:
+Public documentation should be updated when user workflows, public APIs, quality interpretation, or deployment assumptions change.
 
-- MkDocs source;
-- public project descriptions;
-- public API descriptions;
-- diagrams, screenshots, and assets approved for public release;
-- license and project metadata.
+## Operational Monitoring
+
+Operators should monitor service health, imagery availability, processing jobs, data storage, and forecast or validation failures. Diagnostics should distinguish between system errors, missing imagery, and low-quality observations.

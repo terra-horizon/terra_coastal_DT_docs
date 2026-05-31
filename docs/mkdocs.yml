@@ -12,15 +12,14 @@ nav:
   - Workflows:
     - Forecast Workflow: forecast-workflow.md
     - Retrospective Validation: validation.md
-    - Technical Route: technical-route.md
-  - Setup & Monitoring:
+    - Technical Approach: technical-route.md
+  - Setup & Operations:
     - Deployment: deployment.md
     - Configuration: configuration.md
     - Maintenance: maintenance.md
   - Material:
     - Quality Assurance: qa.md
     - FAQ & Known Issues: faq.md
-    - Technical Route (Chinese): technical-route-zh.md
   - License: license.md
   - Home: https://terra-horizon.github.io/
 

@@ -1,46 +1,33 @@
 # Service Architecture
 
-TERRA UGLA is organized as a coastal digital twin module rather than a single image-processing script. Its purpose is to maintain a repeatable state representation for each coastal AOI and expose current-state extraction, historical context, future forecasting, and validation workflows.
+TERRA UGLA is organized as a coastal digital twin module. Its purpose is to maintain a repeatable coastal state representation for each AOI and expose workflows for current-state extraction, historical context, forecasting, and validation.
 
 ## Core Components
 
 ### AOI and Fixed Geometry
 
-Each prepared AOI has a stable measurement frame:
-
-- a fixed reference line;
-- a fixed set of transects;
-- metadata describing the source scene, method, model checkpoint, and metric CRS.
-
-The fixed geometry is the common reference system used by extraction, historical reconstruction, forecasting, and validation.
+Each prepared AOI has a stable measurement frame made of a reference line and a set of transects. This fixed geometry is the common reference system used to compare observations across dates and to reconstruct forecast results back onto the map.
 
 ### Observation Ingestion
 
-The runtime workflow searches recent candidate satellite scenes, applies scene-quality checks, downloads usable imagery where credentials are available, and prepares preview and raster assets for the selected AOI.
+The module searches candidate satellite scenes for the selected AOI, applies quality checks, and prepares the accepted observation for vegetation edge extraction. Scene availability depends on imagery access, cloud coverage, and data quality.
 
 ### Vegetation Edge Extraction
 
-Vegetation edge extraction combines remote-sensing features, fixed-geometry constraints, candidate generation, and quality scoring. The output is a map-ready VE geometry plus per-transect distance observations.
+Vegetation edge extraction converts an accepted satellite observation into a coastal state line. The process combines remote-sensing indicators, geometry constraints, candidate selection, and quality checks. The result is a map-ready vegetation edge together with transect-distance observations.
 
 ### Forecasting
 
-The operational forecasting route predicts future vegetation edge position as transect distances against the fixed AOI geometry. Forecast distances are reconstructed into p50 and uncertainty-bound geometries for map display.
+The forecast workflow predicts future vegetation edge position as distances along the AOI transects. These predicted distances are reconstructed into map-ready forecast lines and uncertainty bounds.
 
 ### Retrospective Validation
 
-The validation workflow treats the latest accepted observation as current ground truth, builds same-month historical cutoff cases, reruns forecasts from historical dates, and compares predicted state against the target observation.
+The validation workflow compares historical cutoff forecasts against a later observed target state. This helps users understand whether recent forecasts are behaving consistently and how forecast error changes across different lookback periods.
 
 ### Digital Twin State
 
-The backend can maintain AOI-level state that supports bootstrap, assimilation cycles, prediction, and future retraining workflows. This state layer is what makes the module a persistent digital twin capability instead of a one-off processing endpoint.
+AOI-level state can be updated as new observations become available. This state layer lets the module connect current observations, historical memory, future scenarios, and validation evidence.
 
-## Main Interfaces
+## Interfaces
 
-The module exposes:
-
-- human-facing web pages for forecast, validation, and geometry preparation workflows;
-- AOI and fixed-geometry endpoints;
-- latest-observation extraction and forecast endpoints;
-- validation history, run, and backfill planning endpoints;
-- digital twin bootstrap and prediction endpoints;
-- job and result-artifact endpoints.
+The module exposes user-facing workflows and API endpoints for AOI discovery, fixed-geometry retrieval, latest-observation extraction, forecasting, validation, digital twin prediction, job status, and result access.

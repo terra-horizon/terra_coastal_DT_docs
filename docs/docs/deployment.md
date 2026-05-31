@@ -1,26 +1,29 @@
 # Deployment
 
-This public repository is intended to publish documentation, not the private implementation service.
+This page describes deployment concepts for users and integrators. It does not prescribe one specific operational environment.
 
-## Documentation Deployment
+## Documentation Site
 
-Documentation is built with MkDocs Material and follows the same pattern as the TERRA AAI documentation repository. The on-demand GitHub Actions workflow publishes versioned documentation through `mike` to the `gh-pages` branch.
-
-The workflow expects the MkDocs project to live in:
+The public documentation is published through GitHub Pages:
 
 ```text
-docs/
+https://terra-uglateam.github.io/terra_coast_DT_docs/
 ```
 
-## Implementation Deployment
+The site is built from the MkDocs source in this repository.
 
-The implementation service should be deployed from the separate private code repository. That repository is responsible for runtime packaging, service images, operational secrets, model checkpoints, and environment-specific deployment instructions.
+## Service Deployment Context
 
-## Repository Boundary
+TERRA UGLA is expected to run as part of a wider platform or project environment where satellite imagery access, AOI data, processing resources, storage, and user-facing interfaces are available.
 
-Do not publish the following in this documentation repository:
+A typical deployment needs:
 
-- credentials or `config.json`;
-- generated imagery, rasters, AOI private data, or model checkpoints;
-- service source code;
-- local test caches, bytecode, or private validation outputs.
+- access to required satellite imagery services or prepared imagery archives;
+- storage for AOI geometry, run outputs, validation outputs, and digital twin state;
+- compute resources suitable for geospatial processing and forecast inference;
+- configuration for environment-specific paths and service endpoints;
+- monitoring of health, job status, and data availability.
+
+## Publication and Access
+
+Public users generally interact with TERRA UGLA through the deployed documentation, maps, API endpoints, or project demonstrations. Operational deployment details such as credentials, private datasets, and infrastructure-specific secrets are managed outside the public documentation site.

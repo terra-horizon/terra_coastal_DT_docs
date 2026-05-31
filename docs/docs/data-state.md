@@ -1,37 +1,34 @@
 # Data & State Model
 
-TERRA UGLA uses fixed AOI geometry and per-run artifacts to keep coastal state comparable across time.
+TERRA UGLA keeps coastal observations comparable by expressing them in an AOI-specific measurement frame.
 
 ## AOI Geometry
 
-Each AOI has one canonical geometry set. The key artifacts are:
+Each AOI uses one stable reference line and one stable set of transects. The reference line defines the baseline, and transects define the cross-shore profiles used to measure vegetation edge position.
 
-```text
-data/aoi/<aoi_id>/refline.geojson
-data/aoi/<aoi_id>/refline_metadata.json
-data/aoi/<aoi_id>/transects.geojson
-```
+This fixed geometry lets the module compare current observations, historical observations, and forecast results in the same spatial frame.
 
-The reference line defines the measurement baseline, and transects define the cross-shore profiles used to convert vegetation edge position into a distance time series.
+## Observations and Runs
 
-## Runtime Runs
+An accepted observation can produce several map and data products:
 
-Runtime extraction and forecast outputs are grouped by run identifier:
+- scene preview layers;
+- extracted vegetation edge geometry;
+- optional waterline or auxiliary layers;
+- transect intersections and distance measurements;
+- run summary and quality information;
+- forecast geometries and uncertainty bounds.
 
-```text
-data/runs/<run_id>/
-```
+These outputs support both the interactive map workflow and later audit or validation tasks.
 
-Typical run outputs include imagery, previews, transects, intersections, vegetation-edge exports, waterline exports, selection traces, run summaries, manifests, and forecast outputs.
+## Vegetation Edge History
 
-## Fixed-Geometry VE History
-
-The fixed-geometry extraction history is the bridge between imagery and forecasting. It stores scene-level vegetation edge observations in a representation that can be compared across years and AOIs.
+The vegetation edge history stores repeated observations under the same AOI geometry. This history is the input for forecasting and for retrospective validation.
 
 ## Digital Twin State
 
-AOI-level digital twin state is maintained separately from single-run output. It supports bootstrap, assimilation, and prediction paths and can be updated as new observations become available.
+Digital twin state represents the evolving coastal condition for an AOI. It can be updated as new observations become available and can support future prediction, state review, and operational decision support.
 
-## Public Repository Boundary
+## Public Data Boundary
 
-This documentation repository should not contain private data, credentials, model checkpoints, generated imagery, or implementation code. Those assets belong in the private implementation repository or secured operational storage.
+Public documentation describes the data model and outputs at a conceptual level. Sensitive credentials, private datasets, unpublished imagery, and model artifacts are not part of the public documentation site.

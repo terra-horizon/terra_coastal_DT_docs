@@ -1,33 +1,34 @@
 # Quality Assurance
 
-Quality assurance for TERRA UGLA is split between implementation testing in the private code repository and public documentation checks in this repository.
+Quality assurance for TERRA UGLA focuses on whether the module produces traceable, interpretable, and consistent coastal state outputs.
 
-## Implementation QA
+## Workflow Checks
 
-The implementation test suite should cover:
+Key workflows should be checked end to end:
 
-- page smoke tests for forecast and validation interfaces;
-- AOI and fixed-geometry API contracts;
-- latest-observation extraction endpoint behavior;
-- forecast endpoint validation;
-- retrospective validation slicing, ranking, and error handling;
-- result download and artifact-serving behavior.
+- selecting a prepared AOI;
+- loading fixed geometry;
+- extracting or loading the latest vegetation edge observation;
+- displaying current state on the map;
+- loading historical context;
+- producing forecast layers and uncertainty bounds;
+- running retrospective validation cases;
+- downloading or inspecting result artifacts where enabled.
 
-## Documentation QA
+## Data Quality Checks
 
-The public documentation repository should be checked for:
+The module depends on the quality of source imagery and AOI geometry. Important checks include:
 
-- no committed credentials or private runtime configuration;
-- no service source code or generated model/data artifacts;
-- valid MkDocs navigation;
-- working links to OpenAPI and technical route pages;
-- clear separation between public documentation and private implementation details.
+- cloud and valid-pixel screening;
+- vegetation edge extraction coverage;
+- transect hit ratio and missing-transect indicators;
+- consistency of fixed geometry across dates;
+- availability of same-month historical observations for validation.
 
-## Release Checklist
+## Forecast Review
 
-Before publishing a documentation version:
+Forecast outputs should be reviewed with both map overlays and summary metrics. Users should inspect the central forecast line, uncertainty bounds, and any areas where the forecast suggests possible landward exposure.
 
-1. confirm `docs/mkdocs.yml` uses the correct `site_url` and `repo_url`;
-2. run a local MkDocs build where dependencies are available;
-3. scan the tree for code, credentials, generated data, and model artifacts;
-4. publish with the on-demand workflow and a clear version label.
+## Interpretation
+
+Quality checks support interpretation but do not remove the need for expert judgement. Coastal systems can be affected by storms, engineering works, sediment changes, vegetation dynamics, and data gaps that may not be fully captured by an automated forecast.

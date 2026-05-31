@@ -1,26 +1,31 @@
 # Configuration
 
-This page documents configuration concepts without exposing private runtime values.
+TERRA UGLA relies on environment-specific configuration so that the same module can run in different deployment contexts.
 
-## Runtime Configuration
+## Main Configuration Areas
 
-The implementation service uses environment-specific configuration for host, port, debug mode, imagery access, data paths, and optional model locations. Public documentation should describe the configuration categories, but real credentials and operational secrets must remain outside this repository.
+A deployment normally needs configuration for:
 
-## Credentials
+- service host, port, and runtime mode;
+- imagery provider access or local imagery archives;
+- AOI data locations;
+- run output and artifact storage;
+- model or forecast resource locations;
+- job processing behavior;
+- public URLs used by maps, APIs, and documentation.
 
-Sentinel Hub, CDSE, cloud storage, and deployment credentials must not be committed to the public documentation repository.
+## Credentials and Access
 
-## Example Files
+Some deployments require credentials for imagery services, storage, or platform integration. These values should be managed through the deployment environment and should not be exposed through public documentation or public client-side code.
 
-Configuration examples can be documented in prose or with redacted snippets. Full runtime templates belong in the private implementation repository unless they are explicitly reviewed for public release.
+## User-Facing Impact
 
-## Documentation Build
+Configuration affects what a user can do in the interface. For example:
 
-Local documentation preview uses:
+- if imagery access is unavailable, latest-observation extraction may be limited;
+- if historical AOI data is incomplete, validation cases may be unavailable;
+- if forecast resources are not configured, forecast endpoints may return a diagnostic response rather than a prediction.
 
-```bash
-cd docs
-mkdocs serve
-```
+## Health Checks
 
-Versioned publication uses the on-demand GitHub Actions workflow in `.github/workflows/deploy-docs-on-demand.yml`.
+Public health and status endpoints can help operators and integrators confirm whether the service is running and whether upstream imagery access is available.
