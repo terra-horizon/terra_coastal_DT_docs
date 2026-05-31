@@ -6,7 +6,7 @@ TERRA UGLA supports vegetation-edge based coastline monitoring, probabilistic fo
 
 If you are looking for the documentation site, use the published GitHub Pages URL once the repository is connected to the TERRA GitHub organization:
 
-https://terra-horizon.github.io/terra-ugla-doc/
+https://terra-uglateam.github.io/terra_coast_DT_docs/
 
 ## Local Documentation Preview
 

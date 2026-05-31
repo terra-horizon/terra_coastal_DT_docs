@@ -1,7 +1,7 @@
 site_name: TERRA UGLA
 
-site_url: https://terra-horizon.github.io/terra-ugla-doc/
-repo_url: https://github.com/terra-horizon/terra-ugla-doc/
+site_url: https://terra-uglateam.github.io/terra_coast_DT_docs/
+repo_url: https://github.com/TERRA-UGLATeam/terra_coast_DT_docs/
 
 nav:
   - Overview: index.md
