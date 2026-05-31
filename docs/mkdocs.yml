@@ -1,0 +1,69 @@
+site_name: TERRA UGLA
+
+site_url: https://terra-horizon.github.io/terra-ugla-doc/
+repo_url: https://github.com/terra-horizon/terra-ugla-doc/
+
+nav:
+  - Overview: index.md
+  - System:
+    - Architecture: architecture.md
+    - Data & State Model: data-state.md
+    - API Surface: api.md
+  - Workflows:
+    - Forecast Workflow: forecast-workflow.md
+    - Retrospective Validation: validation.md
+    - Technical Route: technical-route.md
+  - Setup & Monitoring:
+    - Deployment: deployment.md
+    - Configuration: configuration.md
+    - Maintenance: maintenance.md
+  - Material:
+    - Quality Assurance: qa.md
+    - FAQ & Known Issues: faq.md
+    - Technical Route (Chinese): technical-route-zh.md
+  - License: license.md
+  - Home: https://terra-horizon.github.io/
+
+theme:
+  name: 'material'
+  favicon: images/favicon.ico
+  logo: images/TERRA_Logo_Header.png
+  icon:
+    repo: fontawesome/brands/github
+  custom_dir: overrides
+  features:
+    - navigation.path
+    - navigation.top
+
+extra_css:
+  - stylesheets/custom-footer.css
+  - stylesheets/mkdocsoad.css
+
+plugins:
+  - search
+  - mike
+  - neoteroi.mkdocsoad:
+      use_pymdownx: true
+
+markdown_extensions:
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+extra:
+  version:
+    provider: mike
+    alias: true
+    default: latest
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/terra-horizon
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/horizon_terra
+    - icon: fontawesome/brands/youtube
+      link: https://www.youtube.com/@TERRAHORIZON
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/terra-horizon
