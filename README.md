@@ -6,7 +6,7 @@ TERRA Coastal DT supports vegetation-edge based coastline monitoring, probabilis
 
 Documentation site:
 
-https://terra-uglateam.github.io/terra_coast_DT_docs/
+https://terra-horizon.github.io/terra_coastal_DT_docs/
 
 ## Local Documentation Preview
 
