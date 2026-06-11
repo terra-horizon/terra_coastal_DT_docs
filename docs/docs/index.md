@@ -6,6 +6,10 @@ The module helps users work with coastal Areas of Interest (AOIs) by turning sat
 
 The main documentation entry points are:
 
+- [AI-enabled Satellite Image Processing](components/satellite-image-processing.md), for satellite scene search, screening, preparation, and observation artifacts.
+- [Coastal Vegetation Edge Indicator Extraction](components/vegetation-edge-extraction.md), for fixed-geometry VE extraction and transect-distance observations.
+- [Coastal Change Time-Series Analysis and Forecasting](components/time-series-forecasting.md), for historical context, probabilistic forecasting, and retrospective validation.
+- [Intelligent Coastal Digital Twin Orchestration](components/digital-twin-orchestration.md), for the runtime workflow coordinator, state management, jobs, APIs, and user-facing interfaces.
 - [Architecture](architecture.md), for the module structure and responsibilities.
 - [Data & State Model](data-state.md), for AOI geometry, run outputs, and digital twin state concepts.
 - [Forecast Workflow](forecast-workflow.md), for the AOI-first user workflow.

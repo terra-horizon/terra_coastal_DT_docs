@@ -4,6 +4,15 @@ TERRA Coastal DT is organized as a coastal digital twin module. Its purpose is t
 
 ## Core Components
 
+The Coastal DT documentation separates the runtime product-chain capabilities into four component pages:
+
+- [AI-enabled Satellite Image Processing](components/satellite-image-processing.md)
+- [Coastal Vegetation Edge Indicator Extraction](components/vegetation-edge-extraction.md)
+- [Coastal Change Time-Series Analysis and Forecasting](components/time-series-forecasting.md)
+- [Intelligent Coastal Digital Twin Orchestration](components/digital-twin-orchestration.md)
+
+Together, these components describe the operational flow from satellite observation preparation to coastal indicator extraction, time-series forecasting, validation, and digital twin orchestration. Training-oriented activities such as model retraining and data augmentation are treated as supporting model lifecycle work rather than core runtime steps of the product chain.
+
 ### AOI and Fixed Geometry
 
 Each prepared AOI has a stable measurement frame made of a reference line and a set of transects. This fixed geometry is the common reference system used to compare observations across dates and to reconstruct forecast results back onto the map.

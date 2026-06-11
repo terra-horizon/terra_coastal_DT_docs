@@ -7,7 +7,7 @@ This page describes deployment concepts for users and integrators. It does not p
 The public documentation is published through GitHub Pages:
 
 ```text
-https://terra-uglateam.github.io/terra_coast_DT_docs/
+https://terra-horizon.github.io/terra_coastal_DT_docs/latest/
 ```
 
 The site is built from the MkDocs source in this repository.

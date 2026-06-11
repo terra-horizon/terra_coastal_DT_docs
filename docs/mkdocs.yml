@@ -1,10 +1,15 @@
 site_name: TERRA Coastal DT
 
-site_url: https://terra-uglateam.github.io/terra_coast_DT_docs/
+site_url: https://terra-horizon.github.io/terra_coastal_DT_docs/
 repo_url: https://github.com/TERRA-UGLATeam/terra_coast_DT_docs/
 
 nav:
   - Overview: index.md
+  - Components:
+    - AI-enabled Satellite Image Processing: components/satellite-image-processing.md
+    - Coastal Vegetation Edge Indicator Extraction: components/vegetation-edge-extraction.md
+    - Coastal Change Time-Series Analysis and Forecasting: components/time-series-forecasting.md
+    - Intelligent Coastal Digital Twin Orchestration: components/digital-twin-orchestration.md
   - System:
     - Architecture: architecture.md
     - Data & State Model: data-state.md
