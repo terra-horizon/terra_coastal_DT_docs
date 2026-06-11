@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # TERRA Coastal DT
 
 This repository hosts the public documentation for the TERRA Coastal DT module.
@@ -36,5 +35,4 @@ pip install mkdocs mkdocs-material mike neoteroi-mkdocs pymdown-extensions
 mkdocs serve
 ```
 
->>>>>>> 2cc07fa (update component info of coastal DT)
 The documentation is built with MkDocs Material and published through GitHub Pages.
