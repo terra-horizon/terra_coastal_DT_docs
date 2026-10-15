@@ -1,10 +1,16 @@
 site_name: TERRA Coastal DT
+site_description: Coastal digital twin for vegetation-edge monitoring and MambaLSTM-based forecasting on Scottish dune coasts.
 
 site_url: https://terra-horizon.github.io/terra_coastal_DT_docs/
-repo_url: https://github.com/TERRA-UGLATeam/terra_coast_DT_docs/
+repo_url: https://github.com/terra-horizon/terra_coastal_DT_docs/
+repo_name: terra_coastal_DT_docs
 
 nav:
   - Overview: index.md
+  - AI Model:
+    - MambaLSTM Forecasting Model: ai-model/mambalstm.md
+    - Training & Evaluation: ai-model/training-evaluation.md
+    - Model Lifecycle: ai-model/model-lifecycle.md
   - Components:
     - AI-enabled Satellite Image Processing: components/satellite-image-processing.md
     - Coastal Vegetation Edge Indicator Extraction: components/vegetation-edge-extraction.md
@@ -13,6 +19,7 @@ nav:
   - System:
     - Architecture: architecture.md
     - Data & State Model: data-state.md
+    - Data Ingestion: data-ingestion.md
     - API Surface: api.md
   - Workflows:
     - Forecast Workflow: forecast-workflow.md
@@ -38,10 +45,15 @@ theme:
   features:
     - navigation.path
     - navigation.top
+    - content.code.copy
 
 extra_css:
   - stylesheets/custom-footer.css
   - stylesheets/mkdocsoad.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
 
 plugins:
   - search
@@ -50,8 +62,18 @@ plugins:
       use_pymdownx: true
 
 markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - toc:

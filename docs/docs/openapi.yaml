@@ -1,63 +1,400 @@
 openapi: 3.0.3
 info:
   title: TERRA Coastal DT API
-  version: "0.1.0"
+  version: "2.0.0"
+  description: >
+    Public summary of the TERRA Coastal DT (use case 3) HTTP API: vegetation-edge
+    extraction, MambaLSTM hybrid forecasting, retrospective validation, digital twin
+    jobs and model registry. Distances are metres along fixed transects, positive
+    seaward. Long-running work returns a job identifier to poll.
+tags:
+  - name: Health
+  - name: AOI
+  - name: Forecast
+  - name: Validation
+  - name: Jobs
+  - name: Models
+  - name: Results
 paths:
+  /health/live:
+    get:
+      tags: [Health]
+      summary: Process liveness probe (no dependency checks)
+      responses:
+        "200": { description: Process is alive }
+  /health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness of MongoDB, UC3 collections and MinIO
+      responses:
+        "200": { description: Dependencies are ready }
+        "503": { description: A dependency or required collection is unavailable }
   /healthz:
     get:
-      summary: Health check
+      tags: [Health]
+      summary: Combined health check
       responses:
-        "200":
-          description: Service is healthy
+        "200": { description: Service is healthy }
+        "503": { description: Durable storage is unavailable }
   /check_sentinel_hub_status:
     get:
-      summary: Check Sentinel Hub availability
+      tags: [Health]
+      summary: Imagery provider availability
       responses:
-        "200":
-          description: Sentinel Hub status
+        "200": { description: Provider status }
+  /aoi/prepared:
+    get:
+      tags: [AOI]
+      summary: AOIs with fixed geometry and a forecaster (retired AOIs hidden)
+      responses:
+        "200": { description: Prepared AOI list }
   /aoi:
     get:
-      summary: List AOIs
+      tags: [AOI]
+      summary: List all AOIs
       responses:
-        "200":
-          description: AOI list
+        "200": { description: AOI list }
+  /aoi/{aoi_id}/geometry/fixed:
+    get:
+      tags: [AOI]
+      summary: Active reference line and transects
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
+      responses:
+        "200": { description: Reference line and transects as GeoJSON }
+        "404": { description: AOI or fixed geometry not found }
   /aoi/{aoi_id}/timeseries/status:
     get:
-      summary: Fixed-geometry timeseries readiness for one AOI
+      tags: [AOI]
+      summary: Dataset readiness and scene counts
       parameters:
-        - in: path
-          name: aoi_id
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/AoiId"
       responses:
-        "200":
-          description: AOI timeseries status
-  /aoi/{aoi_id}/forecast/latest:
+        "200": { description: Time-series status }
+  /aoi/{aoi_id}/extract/latest:
     post:
-      summary: Forecast latest VE state from the newest AOI transect series
+      tags: [Forecast]
+      summary: Extract the newest usable vegetation-edge observation
       parameters:
-        - in: path
-          name: aoi_id
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/AoiId"
       requestBody:
         required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force_refresh:
+                  type: boolean
+                  default: false
+                  description: Ignore the observation cache and search the catalogue again
       responses:
-        "200":
-          description: Forecast metadata and artifact paths. `yearly` returns statistical p10/p50/p90 quantile forecasts; `semiannual` may return either learned output or baseline fallback.
-  /dt/bootstrap:
-    get:
-      summary: Bootstrap digital twin state
-      responses:
-        "200":
-          description: Bootstrap payload
-  /dt/predict:
+        "200": { description: Accepted scene, VE line, transect distances, quality metrics and run identifier }
+  /aoi/{aoi_id}/history/context:
     post:
-      summary: Predict future VE state
+      tags: [Forecast]
+      summary: Historical context for the forecast page
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                years: { type: integer, default: 5 }
+                month: { type: integer, minimum: 1, maximum: 12 }
+      responses:
+        "200": { description: Historical context summary }
+  /aoi/{aoi_id}/history/coastlines:
+    post:
+      tags: [Forecast]
+      summary: Same-month vegetation-edge lines for the last N years
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                years: { type: integer, default: 5 }
+                month: { type: integer, minimum: 1, maximum: 12 }
+      responses:
+        "200": { description: One line per year (adjacent month used and labelled where needed) and the median net change }
+  /aoi/{aoi_id}/forecast/latest:
+    post:
+      tags: [Forecast]
+      summary: Forecast from the latest observation (MambaLSTM hybrid for live AOIs)
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                run_id:
+                  type: string
+                  description: Run of the extracted observation to forecast from
+                profile:
+                  type: string
+                  enum: [yearly, semiannual]
+                  default: yearly
+                steps_ahead:
+                  type: integer
+                  default: 1
+                  description: Horizon in steps of 12 (yearly) or 6 (semiannual) months
+      responses:
+        "200":
+          description: >
+            p10 / p50 / p90 lines, uncertainty band, erosion-risk polygons and a
+            forecast_method block (base and correction components, gate, interval
+            calibration, horizon_extrapolated flag, model_skill).
+  /aoi/{aoi_id}/validation/history:
+    post:
+      tags: [Validation]
+      summary: Same-month historical cut-offs and suggested cases
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
       requestBody:
         required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                run_id: { type: string }
+                lookback_years: { type: integer, default: 5 }
+                preferred_case_count: { type: integer, default: 2 }
       responses:
-        "200":
-          description: Prediction payload with `primary_forecast_geojson` (`p50`) and uncertainty lines (`p10/p50/p90`).
+        "200": { description: Available cut-off years and suggested cases }
+  /aoi/{aoi_id}/validation/run:
+    post:
+      tags: [Validation]
+      summary: Run retrospective validation cases
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                run_id: { type: string }
+                cases: { type: array, items: { type: object } }
+                lookback_years: { type: integer, default: 5 }
+      responses:
+        "200": { description: Per-case errors for the hybrid and comparison methods, map overlays and model_skill }
+  /aoi/{aoi_id}/validation/backfill-plan:
+    post:
+      tags: [Validation]
+      summary: Explain missing cut-off years and recovery steps
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
+      responses:
+        "200": { description: Diagnosis and recommended recovery }
+  /jobs/assimilate:
+    post:
+      tags: [Jobs]
+      summary: Assimilate committed scene assets into an AOI's state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aoi_id]
+              properties:
+                aoi_id: { type: string }
+                scene_asset_ids: { type: array, items: { type: string } }
+                idempotency_key: { type: string }
+                correlation_id: { type: string }
+      responses:
+        "202": { description: Persistent job accepted }
+  /jobs/extract:
+    post:
+      tags: [Jobs]
+      summary: Extract the vegetation edge from given scenes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aoi_id, scene_ids]
+              properties:
+                aoi_id: { type: string }
+                scene_ids: { type: array, items: { type: string } }
+      responses:
+        "202": { description: Job accepted }
+  /jobs/predict:
+    post:
+      tags: [Jobs]
+      summary: Queue a forecast
+      responses:
+        "202": { description: Job accepted }
+  /jobs/retrain:
+    post:
+      tags: [Jobs]
+      summary: Candidate training for per-AOI legacy forecasters
+      responses:
+        "202": { description: Candidate training job accepted }
+        "503": { description: Durable storage is not enabled }
+  /jobs/{job_id}:
+    get:
+      tags: [Jobs]
+      summary: Job state, phase events and result
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Job state }
+        "404": { description: Job not found }
+  /aois/{aoi_id}/observations:
+    get:
+      tags: [Jobs]
+      summary: Observation history of an AOI
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
+      responses:
+        "200": { description: Observations }
+  /observations/{observation_id}/review:
+    post:
+      tags: [Jobs]
+      summary: Record a review decision for an observation
+      parameters:
+        - in: path
+          name: observation_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                decision: { type: string }
+                reason_codes: { type: array, items: { type: string } }
+                note: { type: string }
+      responses:
+        "200": { description: Review recorded }
+  /dt/bootstrap:
+    get:
+      tags: [Jobs]
+      summary: Digital twin state summary
+      responses:
+        "200": { description: Bootstrap payload }
+  /dt/predict:
+    post:
+      tags: [Jobs]
+      summary: Predict from digital twin state
+      responses:
+        "200": { description: Prediction payload with p10 / p50 / p90 lines }
+  /aois/{aoi_id}/model-status:
+    get:
+      tags: [Models]
+      summary: Active model, candidate and retraining eligibility
+      parameters:
+        - $ref: "#/components/parameters/AoiId"
+      responses:
+        "200": { description: Model status }
+        "503": { description: Durable storage is not enabled }
+  /models/{model_version_id}/promote:
+    post:
+      tags: [Models]
+      summary: Promote an evaluated candidate and its dataset
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ModelVersionId"
+      responses:
+        "200": { description: Candidate promoted atomically }
+        "403": { description: Administrator authorisation required }
+        "409": { description: Model is not an eligible candidate }
+  /models/{model_version_id}/rollback:
+    post:
+      tags: [Models]
+      summary: Restore the previous model and its dataset
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ModelVersionId"
+      responses:
+        "200": { description: Previous model restored atomically }
+        "403": { description: Administrator authorisation required }
+        "409": { description: No valid rollback target }
+  /artifacts/{artifact_id}:
+    get:
+      tags: [Results]
+      summary: Resolve a committed artifact
+      parameters:
+        - in: path
+          name: artifact_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: redirect
+          schema: { type: boolean, default: true }
+      responses:
+        "200": { description: Artifact reference when redirect is false }
+        "302": { description: Redirect to a presigned object URL }
+        "404": { description: Artifact not found }
+  /results/{run_id}/summary:
+    get:
+      tags: [Results]
+      summary: Run summary
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200": { description: Run summary }
+  /results/{run_id}/download:
+    get:
+      tags: [Results]
+      summary: Download exported run products
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200": { description: Exported products }
+        "302": { description: Redirect to a presigned object URL }
+  /runs/{run_id}/artifacts/{relative_path}:
+    get:
+      tags: [Results]
+      summary: A run's previews and exports
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - in: path
+          name: relative_path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Artifact content }
+        "302": { description: Redirect to a presigned object URL }
+components:
+  parameters:
+    AoiId:
+      in: path
+      name: aoi_id
+      required: true
+      schema: { type: string, example: aoi_01 }
+    RunId:
+      in: path
+      name: run_id
+      required: true
+      schema: { type: string }
+    ModelVersionId:
+      in: path
+      name: model_version_id
+      required: true
+      schema: { type: string }
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

@@ -1,68 +1,76 @@
 # AI-enabled Satellite Image Processing
 
-This component prepares satellite observations for the coastal digital twin workflow. It turns an AOI request into usable remote-sensing inputs for downstream coastal indicator extraction.
-
-## Component Role
-
-The component is responsible for:
-
-- searching and selecting satellite scenes for a selected AOI;
-- checking scene usability based on cloud, valid-pixel, and data-quality conditions;
-- preparing raster and preview products for processing and map display;
-- exposing observation metadata and diagnostics to the rest of the workflow.
-
-It provides the observation layer used by vegetation-edge extraction, time-series construction, validation, and forecast workflows.
-
-## Position in the Product Chain
-
-This is the first runtime step of the Digital Twin for Monitoring Coastal Change from Satellite Remote Sensing product chain.
+This component turns an AOI request into screened, analysis-ready Sentinel-2 imagery for vegetation-edge extraction. It is the first runtime step of the product chain.
 
 ```text
-AOI selection -> satellite scene search -> quality screening -> imagery preparation -> coastal indicator extraction
+AOI -> catalogue search -> AOI-level cloud screening -> 5-band download -> preflight checks -> scene asset
 ```
 
-The component does not describe model training or data augmentation workflows. Those activities are part of the supporting model lifecycle and remain outside the runtime product-chain execution.
+## Component role
 
-## Inputs
+- search the Copernicus Data Space Ecosystem (CDSE) catalogue for Sentinel-2 L2A scenes over an AOI;
+- screen candidate scenes for cloud **over the AOI itself**, not just over the whole satellite tile;
+- download the bands the vegetation classifier needs, clipped to the AOI;
+- check every raster structurally and for coastal usability before it is used;
+- record accepted and rejected scenes, with reasons, so every observation is traceable.
 
-- AOI identifier and geometry;
-- configured imagery provider access or prepared imagery archives;
-- scene search window and quality thresholds;
-- deployment-specific storage paths.
+## Data source
+
+| | |
+| --- | --- |
+| Mission | Sentinel-2, Level-2A surface reflectance |
+| Provider | Copernicus Data Space Ecosystem (Sentinel Hub catalogue and processing APIs) |
+| Bands | B02 (blue), B03 (green), B04 (red), B08 (near infrared), B11 (short-wave infrared), delivered as one 5-band reflectance raster |
+| Screening layer | Scene Classification Layer (SCL) |
+
+## AOI-level cloud screening
+
+A Sentinel-2 tile covers about 110 x 110 km, while an AOI covers around 18 km² of coast, about 0.15% of the tile. The tile's cloud figure is therefore a weak guide: the same acquisition has been reported as 54% cloudy on one tile and 24% on its neighbour over identical AOI pixels. The component therefore uses the tile's cloud percentage only as a loose pre-filter, then requests a low-resolution (60 m) probe of the SCL layer over the AOI and computes the share of unusable pixels inside it: medium and high cloud, cloud shadow, thin cirrus, no data, saturated pixels, and snow or ice. Only scenes under the AOI-level limit are downloaded at full resolution, so rejected scenes cost one small request.
+
+## Three acquisition paths
+
+=== "Historical archive"
+
+    Monthly pulls build each AOI's history from 2016 onwards: tile pre-filter at 80% cloud, AOI-level limit of 20%, and up to three scenes per month. Failures raise errors instead of falling back to synthetic data.
+
+=== "Latest observation (on demand)"
+
+    When a user asks for the latest state, the service searches a recent window (120 days by default), probes the newest candidates with AOI-level screening, and accepts the newest scene that passes screening and extraction. A deployment can tighten the AOI cloud limit (10% in operation). Repeated requests within a cache window reuse the accepted observation without another catalogue call.
+
+=== "Scheduled ingestion (TERRA platform)"
+
+    In the platform deployment, the TERRA ingestion service runs the UC3 acquisition profile `coastal-uc3-sentinel2` on a schedule, commits accepted scenes to shared storage, and asks the digital twin to assimilate them. See [Data Ingestion](../data-ingestion.md).
+
+## Preflight checks
+
+Before a raster is used, it must pass:
+
+- **structural checks:** expected band count, data type, georeferencing and AOI coverage;
+- **coastal checks:** enough valid pixels, and enough vegetation (NDVI) contrast for an edge to be measurable;
+- **duplicate checks:** a scene acquired at the same time as one already observed is not processed twice (matched by acquisition time within 3 minutes, because one satellite pass can appear under two tile identifiers).
+
+Rejected scenes are recorded with their reasons, so a missing month can be explained.
 
 ## Outputs
 
-- accepted scene metadata;
-- prepared raster artifacts;
-- preview images for map display;
-- quality diagnostics;
-- references to imagery artifacts used by downstream components.
+- accepted scene metadata and quality diagnostics;
+- 5-band AOI rasters stored as immutable objects;
+- preview images for the map;
+- scene-evaluation records for accepted and rejected candidates.
 
-## Implementation Scope
-
-In the current implementation, this capability is implemented through the AOI runtime extraction services, imagery access utilities, quality checks, run artifact storage, and API endpoints that support latest-observation extraction.
-
-Relevant service areas include:
-
-- AOI-first runtime extraction;
-- satellite imagery search and loading;
-- scene quality screening;
-- preview and artifact generation.
-
-## Public Interfaces
-
-The component contributes to the following public service areas:
+## Public interfaces
 
 - `GET /check_sentinel_hub_status`
 - `GET /aoi/prepared`
 - `POST /aoi/<aoi_id>/extract/latest`
-- `GET /results/<run_id>/summary`
-- `GET /runs/<run_id>/artifacts/<path>`
+- `POST /jobs/assimilate`
+- `GET /artifacts/<artifact_id>`
 
-## Current Status
+## Current status
 
-Satellite imagery access, AOI-based scene selection, quality screening, preview generation, and runtime image preparation have been implemented and connected to the coastal monitoring workflow.
+Implemented and in operation: catalogue search, AOI-level SCL screening, 5-band download, preflight checks, scene caching and duplicate detection, and the ingestion profile for the TERRA platform. The full 2016 to 2026 archive has been processed for all registry AOIs.
 
-## Planned Work
+## Planned work
 
-Planned work focuses on improving scene-selection robustness, cloud and quality filtering, diagnostics for missing or unsuitable imagery, and integration with platform-level workflow execution.
+- run the ingestion profile under the platform scheduler for daily updates;
+- add exogenous data (waves, surge, water level) alongside imagery as inputs for forecasting.

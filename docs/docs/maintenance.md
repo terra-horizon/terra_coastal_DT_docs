@@ -1,28 +1,46 @@
 # Maintenance
 
-Maintenance keeps TERRA Coastal DT useful as new observations, AOIs, and validation needs appear.
+## Keeping the digital twin current
 
-## AOI Maintenance
+New observations need no manual step in a platform deployment: the daily workflow acquires new scenes and assimilates them, and the next forecast refits the statistical base on the updated record. The MambaLSTM weights do not need to change for new months to count.
 
-AOIs should be reviewed when:
+## Adding an AOI
 
-- the coastline has changed substantially;
-- fixed geometry no longer matches observed vegetation edge behavior;
-- extraction coverage drops unexpectedly;
-- users need new AOIs or revised AOI boundaries.
+`config/aois.json` in the source repository is the single source of truth for AOI extents, names, coastal groups and status. To add a site:
 
-## Observation Updates
+1. **Register** the AOI with its bounding box and coastal group.
+2. **Pull history:** monthly Sentinel-2 scenes from 2016 with AOI-level cloud screening.
+3. **Build geometry:** a reference line from the temporal composite, an orientation check, and transects every 15 m. Check the largest gap between the vegetation edge and the reference line first, and set transect reach with about 100 m of margin.
+4. **Extract** the vegetation edge for every scene, with the temporal prior.
+5. **Run the signal gate.** If the record carries no forecastable signal, stop: the AOI should not be forecast.
+6. **Build the monthly dataset.**
+7. **Retrain** the MambaLSTM correction on all AOIs, and compare the test report with the active model's (see [Model Lifecycle](ai-model/model-lifecycle.md)).
+8. **Publish** the AOI, geometry, history, dataset and model to the stores.
 
-The module can be updated with new observations as imagery becomes available. Regular updates improve the coastal state history and provide more recent starting points for forecasts.
+## Correcting geometry
 
-## Validation Updates
+When a reference line is wrong for a stretch of coast (it runs past the end of a beach, or cuts across a hook so transects run along the edge), the correction is made as a new geometry version: the line is trimmed or rerouted, the affected history is re-extracted, the dataset rebuilt and the model retrained. Past geometry versions are kept, so earlier observations stay traceable.
 
-Validation should be rerun when new target observations become available or when additional historical cases are added. This keeps forecast credibility evidence current.
+## Retiring an AOI
 
-## Documentation Updates
+Set its status to `retired`. It disappears from the web interface and the platform's AOI list, while its records stay in storage.
 
-Public documentation should be updated when user workflows, public APIs, quality interpretation, or deployment assumptions change.
+## Retraining the model
 
-## Operational Monitoring
+Retrain the shared MambaLSTM correction when several months of new history have accumulated across AOIs, when AOIs are added, or after geometry corrections. Always compare the new rolling-origin report with the active one before promoting, and keep the previous package for rollback.
 
-Operators should monitor service health, imagery availability, processing jobs, data storage, and forecast or validation failures. Diagnostics should distinguish between system errors, missing imagery, and low-quality observations.
+## Operational monitoring
+
+| Signal | Where |
+| --- | --- |
+| Service and dependency health | `GET /health/live`, `GET /health/ready` |
+| Job failures and stale jobs | `GET /jobs/<job_id>`, job phase events |
+| Scene rejections and their reasons | Scene evaluations, observation history |
+| Gaps in an AOI's record | Time-series status, validation backfill plan |
+| Model state | `GET /aois/<aoi_id>/model-status` |
+
+Diagnostics separate system errors from missing imagery and from low-quality observations; only the first needs operator action.
+
+## Documentation updates
+
+Update this site whenever user workflows, the public API, the model or deployment assumptions change, and publish it as a new version with the **Deploy Docs** workflow.

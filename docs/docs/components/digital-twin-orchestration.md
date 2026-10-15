@@ -1,79 +1,68 @@
 # Intelligent Coastal Digital Twin Orchestration
 
-This component coordinates the coastal monitoring product chain as an operational digital twin workflow.
+This component makes the processing capabilities behave as one digital twin: it keeps each AOI's coastal state current, coordinates observation, assimilation, forecasting and validation, and exposes the results to users and to the TERRA platform.
 
-## Component Role
+## The digital twin loop
 
-The component connects satellite observation processing, coastal indicator extraction, time-series analysis, forecasting, validation, state management, and user-facing visualisation. It provides the orchestration layer that makes the individual processing capabilities behave as one coastal digital twin workflow.
-
-The component is responsible for:
-
-- maintaining AOI-specific coastal digital twin state;
-- coordinating the main forecast workflow;
-- coordinating retrospective validation;
-- exposing API endpoints and web interfaces;
-- managing asynchronous extraction, prediction, and assimilation jobs;
-- returning map-ready outputs and result artifacts to users and platform services.
-
-## Position in the Product Chain
-
-This component is the runtime coordinator for the full Coastal DT product chain.
-
-```text
-AOI state -> observation update -> VE extraction -> history update -> forecast -> validation/reporting output
+```mermaid
+flowchart LR
+    O["Observe<br/>new scene assets"] --> A["Assimilate<br/>extract, accept or reject"]
+    A --> S["State<br/>observations in MongoDB,<br/>artifacts in MinIO"]
+    S --> F["Forecast<br/>MambaLSTM hybrid"]
+    F --> V["Validate and review<br/>retrospective cases,<br/>observation review"]
+    V --> M["Model lifecycle<br/>promote or roll back"]
+    M --> F
+    S --> O
 ```
 
-It is distinct from training-oriented digital twin activities. Model training, retraining, and data augmentation may support future model lifecycle improvements, but they are not treated as core runtime steps of this product chain.
+1. **Observe.** New scenes arrive from the TERRA ingestion service as committed scene assets, or on demand from the web interface.
+2. **Assimilate.** `POST /jobs/assimilate` processes the new assets for an AOI, oldest first. Each scene is checked against acquisitions already observed, extracted with the AOI's pinned parameters, and either committed as an observation or recorded as rejected with its reasons.
+3. **Update state.** Accepted observations and their per-transect measurements are written to MongoDB; rasters, previews and GeoJSON are stored in MinIO. The container itself holds no durable state.
+4. **Forecast.** The next forecast refits the statistical base on the updated record and applies the MambaLSTM correction (see [MambaLSTM Forecasting Model](../ai-model/mambalstm.md)).
+5. **Validate and review.** Retrospective validation tests forecasts against later observations; operators can review individual observations.
+6. **Model lifecycle.** New model versions are published, promoted or rolled back through the model registry (see [Model Lifecycle](../ai-model/model-lifecycle.md)).
 
-## Inputs
+## Jobs
 
-- AOI selection and state;
-- prepared imagery and extraction results;
-- historical VE time series;
-- forecast and validation requests;
-- workflow and job configuration.
+Long-running work runs as persistent asynchronous jobs:
 
-## Outputs
+- each job has an identifier, ordered phase events and a final result, stored in MongoDB;
+- clients poll `GET /jobs/<job_id>`;
+- submissions accept an idempotency key, so a retried request does not create duplicate work;
+- jobs left running by a stopped container are detected as stale and marked failed.
 
-- workflow status and diagnostics;
-- current coastal state;
-- historical context summaries;
-- forecast and uncertainty layers;
-- validation results;
-- downloadable run artifacts;
-- API responses for platform integration.
+| Job | Purpose |
+| --- | --- |
+| `POST /jobs/assimilate` | Assimilate committed scene assets into an AOI's state |
+| `POST /jobs/extract` | Extract the vegetation edge from given scenes of an AOI |
+| `POST /jobs/predict` | Run a forecast |
+| `POST /jobs/retrain` | Train candidate models for per-AOI legacy forecasters (the shared MambaLSTM is retrained offline) |
 
-## Implementation Scope
+## Platform orchestration
 
-In the current implementation, the orchestration layer is implemented through the Flask application, web templates, static front-end logic, digital twin services, job services, and result retrieval routes.
+In the TERRA platform, Apache Airflow is the control plane. A daily chain calls the TERRA ingestion service with the UC3 profile, skips quietly when no new scene exists, submits the committed scene assets to `POST /jobs/assimilate`, and reports accepted, rejected and duplicate observations. Forecasting remains a user or service action, and model promotion remains an explicit administrator decision. The service's in-process scheduler is disabled in platform deployments and kept only for local development.
 
-Relevant service areas include:
+## User interfaces
 
-- main AOI-first web workflow;
-- validation web workflow;
-- digital twin bootstrap and prediction;
-- asynchronous job handling;
-- map-layer and artifact delivery;
-- deployment and health endpoints.
+- **Forecast** (`/`): select an AOI, extract the latest observation, load history, forecast, and compare historical coastlines.
+- **Validation** (`/validation`): run retrospective cases and compare the hybrid with other methods.
+- **Baseline geometry** (`/baseline-workflow`): inspect and prepare reference lines and transects.
 
-## Public Interfaces
+See [Forecast Workflow](../forecast-workflow.md) and [Retrospective Validation](../validation.md).
 
-The component contributes to the following public service areas:
+## Public interfaces
 
-- `GET /`
-- `GET /validation`
-- `GET /dt/bootstrap`
-- `POST /dt/predict`
-- `POST /jobs/extract`
-- `POST /jobs/predict`
-- `POST /jobs/assimilate`
-- `GET /jobs/<job_id>`
-- `GET /healthz`
+- `GET /`, `GET /validation`, `GET /baseline-workflow`
+- `GET /dt/bootstrap`, `POST /dt/predict`
+- `POST /jobs/assimilate`, `POST /jobs/extract`, `POST /jobs/predict`, `POST /jobs/retrain`, `GET /jobs/<job_id>`
+- `GET /aois/<aoi_id>/observations`, `POST /observations/<observation_id>/review`
+- `GET /health/live`, `GET /health/ready`, `GET /healthz`
 
-## Current Status
+## Current status
 
-The web workflow, digital twin bootstrap and prediction endpoints, asynchronous job handling, result retrieval, and map-based interfaces for forecast and validation have been implemented.
+Implemented: persistent jobs with phase events and idempotency, database-first state in MongoDB and MinIO, scene-asset assimilation with duplicate detection, observation review, model registry with promotion and rollback, and the Airflow workflow for daily acquisition and assimilation.
 
-## Planned Work
+## Planned work
 
-Planned work focuses on improving automated assimilation, report generation, platform integration, operational deployment, and clearer links between Coastal DT outputs and wider TERRA product-chain execution.
+- enable the daily Airflow schedule in the platform deployment after the acquisition pilot;
+- report generation for coastal managers from forecasts and validation results.

@@ -1,34 +1,46 @@
 # Quality Assurance
 
-Quality assurance for TERRA Coastal DT focuses on whether the module produces traceable, interpretable, and consistent coastal state outputs.
+Quality assurance covers four layers: the code, the observations, the model and the deployment.
 
-## Workflow Checks
+## Automated tests
 
-Key workflows should be checked end to end:
+| Suite | Scope |
+| --- | --- |
+| Service tests | API contracts, web pages, extraction quality control, hybrid forecaster, validation service, storage settings and isolation, provenance and downloads |
+| Ingestion package tests | Contract schemas and examples, catalogue handling, AOI screening, raster preflight, orchestration decisions; fully offline with synthetic rasters |
+| Storage contract tests | Run against throwaway authenticated MongoDB and MinIO instances, never against live stores |
 
-- selecting a prepared AOI;
-- loading fixed geometry;
-- extracting or loading the latest vegetation edge observation;
-- displaying current state on the map;
-- loading historical context;
-- producing forecast layers and uncertainty bounds;
-- running retrospective validation cases;
-- downloading or inspecting result artifacts where enabled.
+Tests that need live services are skipped when those are not configured, so the suites run anywhere.
 
-## Data Quality Checks
+## Observation quality
 
-The module depends on the quality of source imagery and AOI geometry. Important checks include:
+- **AOI-level cloud screening** before download, and structural and coastal preflight checks after.
+- **Extraction quality control:** per-scene transect coverage, reach limits from the reference line, and the temporal prior against single-scene failures.
+- **Signal gate** for every AOI before it is forecast.
+- **Review:** operators can record a review decision for any observation.
+- **Rejection records:** every rejected scene keeps its reasons.
 
-- cloud and valid-pixel screening;
-- vegetation edge extraction coverage;
-- transect hit ratio and missing-transect indicators;
-- consistency of fixed geometry across dates;
-- availability of same-month historical observations for validation.
+## Model quality
 
-## Forecast Review
+- **Rolling-origin evaluation** with no look-ahead: the most recent 24 months of every AOI are held out, and metrics are averaged per origin, then per AOI.
+- **Comparison with baselines** in every evaluation: persistence, trend only, a plain LSTM and the statistical base.
+- **Per-horizon gates** limit the MambaLSTM correction to where it has proven useful.
+- **Interval coverage** is reported for every horizon (72 to 76% for a nominal 80%).
+- **Independent window:** the protocol can be repeated on an earlier period to check that rankings hold.
+- **Shared code for training and serving:** model inputs are built by the same functions, so the deployed model sees exactly what it was evaluated on.
 
-Forecast outputs should be reviewed with both map overlays and summary metrics. Users should inspect the central forecast line, uncertainty bounds, and any areas where the forecast suggests possible landward exposure.
+See [Training & Evaluation](ai-model/training-evaluation.md) for the results.
+
+## Provenance and reproducibility
+
+- Every observation carries a pipeline signature; every forecast records its observation, dataset and model versions.
+- Identical requests reuse stored results rather than recomputing them.
+- Objects are immutable and checksummed; cached copies are verified before use.
+
+## Workflow checks
+
+Before a release, the main workflows are checked end to end on a live AOI: select an AOI, load geometry, extract or reuse the latest observation, load history, forecast with bounds and erosion risk, compare historical coastlines, run validation cases, and download an artifact.
 
 ## Interpretation
 
-Quality checks support interpretation but do not remove the need for expert judgement. Coastal systems can be affected by storms, engineering works, sediment changes, vegetation dynamics, and data gaps that may not be fully captured by an automated forecast.
+Automated checks support interpretation but do not replace expert judgement. Storms, engineering works, sediment supply and vegetation management can change a coast in ways an automated forecast does not capture.

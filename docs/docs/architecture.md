@@ -1,42 +1,79 @@
 # Service Architecture
 
-TERRA Coastal DT is organized as a coastal digital twin module. Its purpose is to maintain a repeatable coastal state representation for each AOI and expose workflows for current-state extraction, historical context, forecasting, and validation.
+TERRA Coastal DT runs as one stateless service container next to shared MongoDB and MinIO stores. Durable state (observations, forecasts, datasets, model versions and artifacts) lives in the stores, so the container can be replaced or restarted at any time.
 
-## Core Components
+```mermaid
+flowchart TB
+    subgraph External["External data"]
+        CDSE["Copernicus Data Space<br/>Sentinel-2 L2A"]
+    end
+    subgraph Platform["TERRA platform"]
+        AF["Airflow<br/>daily workflow"]
+        ING["Ingestion service<br/>UC3 profile coastal-uc3-sentinel2"]
+        GW["Gateway<br/>authentication"]
+    end
+    subgraph DT["TERRA Coastal DT service"]
+        API["Flask API + web UI<br/>(gunicorn)"]
+        EXT["VE extraction"]
+        FC["Hybrid forecaster<br/>statistical base + MambaLSTM"]
+        VAL["Retrospective validation"]
+        JOBS["Persistent jobs"]
+    end
+    subgraph Store["Shared storage"]
+        MDB[("MongoDB<br/>state, lineage,<br/>model registry")]
+        MIO[("MinIO<br/>rasters, GeoJSON,<br/>datasets, model packages")]
+    end
+    AF --> ING
+    ING --> CDSE
+    ING --> MDB
+    ING --> MIO
+    AF --> API
+    GW --> API
+    API --> JOBS --> EXT
+    API --> FC
+    API --> VAL
+    API -- "on-demand latest scene" --> CDSE
+    EXT --> MDB
+    EXT --> MIO
+    FC --> MDB
+    FC --> MIO
+```
 
-The Coastal DT documentation separates the runtime product-chain capabilities into four component pages:
+## Components
 
-- [AI-enabled Satellite Image Processing](components/satellite-image-processing.md)
-- [Coastal Vegetation Edge Indicator Extraction](components/vegetation-edge-extraction.md)
-- [Coastal Change Time-Series Analysis and Forecasting](components/time-series-forecasting.md)
-- [Intelligent Coastal Digital Twin Orchestration](components/digital-twin-orchestration.md)
+| Component | Responsibility | Documentation |
+| --- | --- | --- |
+| Satellite image processing | Catalogue search, AOI-level cloud screening, download, preflight checks | [Satellite Image Processing](components/satellite-image-processing.md) |
+| Vegetation-edge extraction | Fixed geometry, classification, per-transect edge selection, temporal prior, quality control | [Vegetation Edge Extraction](components/vegetation-edge-extraction.md) |
+| Time-series analysis and forecasting | Monthly series, MambaLSTM hybrid forecasts, erosion risk, historical coastlines | [Time-Series Forecasting](components/time-series-forecasting.md), [MambaLSTM](ai-model/mambalstm.md) |
+| Digital twin orchestration | Assimilation, jobs, state, model registry, web interface and API | [DT Orchestration](components/digital-twin-orchestration.md) |
+| Data ingestion profile | The UC3 acquisition profile run by the TERRA ingestion service | [Data Ingestion](data-ingestion.md) |
 
-Together, these components describe the operational flow from satellite observation preparation to coastal indicator extraction, time-series forecasting, validation, and digital twin orchestration. Training-oriented activities such as model retraining and data augmentation are treated as supporting model lifecycle work rather than core runtime steps of the product chain.
+## Runtime
 
-### AOI and Fixed Geometry
+- **One process, many threads.** The service runs under gunicorn with one worker and several threads. Jobs run on an in-process executor, so a single process keeps job ownership simple.
+- **Stateless container.** Downloaded datasets, model packages and the vegetation classifier are cached locally only after their checksums are verified, and can be deleted at any time.
+- **Database-first reads.** AOIs, geometry, observations, datasets and active model versions are read from MongoDB; large objects are fetched from MinIO.
+- **Provenance everywhere.** Observations carry a pipeline signature, and forecasts record the model version, dataset version and observation they were made from.
 
-Each prepared AOI has a stable measurement frame made of a reference line and a set of transects. This fixed geometry is the common reference system used to compare observations across dates and to reconstruct forecast results back onto the map.
+## Shared storage and namespacing
 
-### Observation Ingestion
+Every record is scoped by project and use case. In a shared platform database, UC3's collections carry the `uc3_` prefix, and its objects live under their own prefix in the shared bucket, so UC3 cannot read or overwrite other use cases' data. The service refuses to start against a shared database without the approved prefix, and never creates or alters collections there automatically.
 
-The module searches candidate satellite scenes for the selected AOI, applies quality checks, and prepares the accepted observation for vegetation edge extraction. Scene availability depends on imagery access, cloud coverage, and data quality.
+## Security
 
-### Vegetation Edge Extraction
+- Credentials (CDSE, MongoDB, MinIO, admin token) come only from environment variables or mounted secret files; none are stored in code or images.
+- Model administration (`/models/*`) requires an administrator bearer token. Other routes are intended to sit behind the platform gateway, which handles user authentication.
+- Downloads are short-lived presigned MinIO links, so the service never streams large files itself.
+- The container runs as a non-root user.
 
-Vegetation edge extraction converts an accepted satellite observation into a coastal state line. The process combines remote-sensing indicators, geometry constraints, candidate selection, and quality checks. The result is a map-ready vegetation edge together with transect-distance observations.
+## Technology
 
-### Forecasting
-
-The forecast workflow predicts future vegetation edge position as distances along the AOI transects. These predicted distances are reconstructed into map-ready forecast lines and uncertainty bounds.
-
-### Retrospective Validation
-
-The validation workflow compares historical cutoff forecasts against a later observed target state. This helps users understand whether recent forecasts are behaving consistently and how forecast error changes across different lookback periods.
-
-### Digital Twin State
-
-AOI-level state can be updated as new observations become available. This state layer lets the module connect current observations, historical memory, future scenarios, and validation evidence.
-
-## Interfaces
-
-The module exposes user-facing workflows and API endpoints for AOI discovery, fixed-geometry retrieval, latest-observation extraction, forecasting, validation, digital twin prediction, job status, and result access.
+| Layer | Technology |
+| --- | --- |
+| Service | Python 3.10, Flask, gunicorn |
+| Geospatial | rasterio, pyproj, shapely, scikit-image |
+| AI model | PyTorch (CPU inference), MambaLSTM |
+| Storage | MongoDB (replica set), MinIO (S3-compatible) |
+| Orchestration | Apache Airflow (TERRA platform) |
+| Packaging | Docker image published to the GitHub Container Registry |

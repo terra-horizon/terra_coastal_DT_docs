@@ -1,74 +1,69 @@
 # Technical Approach
 
-This page explains the main technical ideas behind TERRA Coastal DT in public-facing terms. It focuses on why the module uses fixed AOI geometry, vegetation edge state extraction, transect-distance forecasting, and retrospective validation.
+This page explains the main technical decisions behind TERRA Coastal DT and the evidence that shaped them.
 
-## Coastal State as a Digital Twin Variable
+## 1. Coastal state as a digital twin variable
 
-TERRA Coastal DT treats the coastline as an evolving state rather than as a single line extracted from one image. For each AOI, the module aims to connect:
+The digital twin treats the coastline as an evolving state, not as a line extracted from one image. For each AOI it maintains:
 
-- the latest observed vegetation edge;
-- historical vegetation edge movement;
-- a stable measurement frame;
-- future forecast scenarios;
-- uncertainty information that can be shown on a map.
+- a fixed measurement frame (reference line and transects);
+- the observed vegetation-edge history on that frame;
+- the latest observed state;
+- forecasts with uncertainty, and evidence of how well past forecasts did.
 
-This lets the wider digital twin reason about current coastal condition, past change, and possible future movement in one workflow.
+## 2. The vegetation edge as the state variable
 
-## Vegetation Edge as the Primary Indicator
+The waterline moves by tens of metres with tide, waves and surge within hours. The vegetation edge moves with erosion and accretion over months and years, which is the change coastal management needs to track. It is the primary state variable; other lines are supporting information only.
 
-The vegetation edge is used as the primary shoreline-state indicator because it is generally more stable than the instantaneous waterline at monthly and yearly timescales. Waterline position can change quickly with tide, waves, and short-term water level. Vegetation edge is better suited to medium-term monitoring and forecast comparison.
+## 3. A fixed measurement frame
 
-Waterline and other layers may still be useful as supporting information, but the main state variable in this workflow is vegetation edge position.
+Observations from different dates must be measured in the same frame, or real change gets mixed with changes in the frame.
 
-## Fixed Reference Line and Transects
+- The **reference line** is traced on a temporal median composite of many clear scenes. This replaced an earlier approach that seeded the line from one scene with a segmentation network: the network failed on coasts it had not seen, its traced boundary followed the image border where vegetation reached it, and a single date biased the datum at sites with a trend. The composite needs no trained model and sits at the long-term mean edge.
+- **Transects** every 15 m give a dense, regular alongshore grid, oriented positive seaward.
+- Site-specific problems (a line ending beyond the beach, a hook the line cut across, a spit tip) are fixed as new geometry versions, not by changing the history.
 
-A central design choice is to give each AOI a stable reference line and a stable set of transects. The reference line acts as the baseline, while transects act as repeatable cross-shore measurement profiles.
+## 4. Robust extraction
 
-This matters because observations from different dates must be measured in the same spatial frame. If every observation used a newly generated baseline, the system would mix real shoreline change with changes in the measurement frame. Fixed geometry avoids that problem and makes historical comparison, forecasting, and validation easier to interpret.
+Scenes acquired within the same month, when the coast has not really moved, show the structure of extraction error. Extraction is precise most of the time (median repeat difference 3.2 m, a third of a Sentinel-2 pixel), but when it fails, it fails coherently over runs of neighbouring transects. A coherent run looks smooth alongshore, so spatial smoothing alone cannot catch it; time can, because a run that is wrong in one scene is right in its neighbours in time. The extraction design reflects that:
 
-## Current-State Extraction
+- candidates from several cues (threshold crossing, contour, gradient) on each transect;
+- joint alongshore selection with a smoothness penalty, preserving well-supported headlands and spits;
+- a leave-one-out temporal prior over the nearest scenes in time, which roughly halved the noise floor at every AOI while preserving known trends;
+- a **signal gate** before any AOI is forecast: if month-to-month differences show that the record is mostly measurement noise, no model can forecast it, and the AOI is not used.
 
-For a selected AOI, the module searches for a usable satellite observation and extracts the current vegetation edge under the fixed geometry. The extraction process combines:
+## 5. Transect distances, not image masks
 
-- scene-quality checks;
-- remote-sensing indicators such as vegetation contrast;
-- candidate vegetation edge generation;
-- geometric consistency checks against the reference line and transects;
-- quality metrics that help identify unreliable cases.
+Forecasting distances along fixed transects, rather than future image masks, gives values with physical meaning (metres), uses the same frame for history, present and future, makes missing or weak transects visible, and turns uncertainty into lower, median and upper lines on the map.
 
-The result is a map-ready vegetation edge line and a set of transect-distance observations.
+## 6. Monthly composites at native spacing
 
-## Forecast Representation
+Each month's accepted scenes are combined into a per-transect median, and values that disagree strongly with their alongshore neighbours are removed. The series keep the native 15 m transect spacing, and gaps stay missing values that the model masks.
 
-Instead of forecasting a future image mask directly, the operational workflow forecasts vegetation edge movement as distances along the fixed transects.
+An earlier design resampled every coastline to a fixed grid and compressed it with principal components. It was dropped: the fixed grid made the same position mean a different place at each AOI and forced gaps to be filled in. The measured alongshore correlation length, 90 to 105 m at every AOI, sets instead the patch width, the outlier-rejection window and the smoothing scale. Because the patch layout does not depend on coastline length, AOIs of any size share one model.
 
-This representation has several advantages:
+## 7. A hybrid AI forecaster
 
-- each value has a clear physical meaning in meters;
-- the same AOI geometry is used for history, current state, and future state;
-- missing or low-quality transects can be inspected directly;
-- uncertainty can be expressed as lower, median, and upper forecast lines;
-- forecast results can be reconstructed back into map geometry.
+The forecaster combines a statistical base with the [MambaLSTM](ai-model/mambalstm.md) deep sequence model:
 
-## Uncertainty
+- **The base** captures level, seasonal cycle and short-term memory, refitted on the whole record at every request, so new observations count immediately.
+- **The trend sets the level but is not extrapolated.** Trends fitted on the two halves of a record correlate at only -0.49 to +0.33. Dropping trend extrapolation cut 24-month error by 9 to 16% in two independent test windows.
+- **MambaLSTM learns the base's errors** from a year of residuals across 27 neighbouring transects and 16 context features, shared across all AOIs. It finds what the base cannot: persistent level offsets (40 to 60% of a year-long offset persists into 12 to 24-month targets) and trend reversion (about half the fitted trend).
+- **A per-horizon gate** scales the correction by its proven usefulness on held-out data, so the hybrid falls back to the base wherever the network adds nothing.
+- **Calibrated intervals** come from conformal error quantiles per AOI and horizon.
 
-Forecast outputs are intended to show both a central estimate and an uncertainty range. In the map workflow, this can appear as a median forecast line and surrounding bounds. The uncertainty band helps users interpret where future vegetation edge position is more or less certain.
+## 8. Evaluation without look-ahead
 
-## Retrospective Validation
+Every result is produced under a rolling-origin protocol: each forecast uses only data up to its own origin, the most recent 24 months of every AOI are held out for testing, and metrics are averaged per origin and then per AOI. This protocol exposed that an earlier static baseline's apparent skill came from look-ahead, and it is the basis for every reported number. Under it, the hybrid is the most accurate of all methods tested at every horizon (see [Training & Evaluation](ai-model/training-evaluation.md)).
 
-Retrospective validation compares historical cutoff forecasts against a later observed target state. This is useful because it turns forecast quality into something visible and testable: users can compare map overlays and summary errors for different historical cases.
+## 9. Database-first digital twin
 
-Same-month validation is preferred where possible because it reduces seasonal mismatch.
+State lives in MongoDB and MinIO, not in the service container. Observations, datasets, models and forecasts are versioned and linked by signatures, so every forecast can be traced to the observation, dataset, model and code that produced it, and an identical request reuses the stored result.
 
-## Current Limitations
+## Limitations
 
-The module should be interpreted as decision-support technology, not as a replacement for expert coastal assessment. Important limitations include:
-
-- forecast quality depends on imagery availability and scene quality;
-- complex coastlines may require additional review of fixed geometry;
-- vegetation edge behavior can differ across AOIs and geomorphological settings;
-- uncertainty bounds are informative but do not capture every possible future driver.
-
-## Summary
-
-The main technical idea behind TERRA Coastal DT is to turn repeated satellite observations into a stable, comparable, and forecastable coastal state record. Fixed geometry provides the measurement frame, vegetation edge extraction provides the observed state, transect-distance forecasting provides future scenarios, and retrospective validation helps users inspect forecast credibility.
+- Accuracy depends on clear-sky imagery; long cloudy periods leave gaps.
+- The model uses only the coastline's own history; storms, surges and wave climate are not yet inputs.
+- Uncertainty intervals are slightly narrow (72 to 76% coverage for a nominal 80%).
+- The approach is validated on Scottish dune coasts; other settings need their own validation.
+- Forecasts are decision support and should be read alongside local knowledge and expert assessment.
